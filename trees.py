@@ -19,7 +19,7 @@ class DecisionTree:
         self.data, self.target, self.root, self.depth,self.leaf_lim,self.isRandomForrest = data,target, None, depth, leaf_lim,isRandomForrest
     def giniIndex(dset, target):#
         return 1 - (len(dset[dset[target]==True])/len(dset))**2-(len(dset[dset[target]==False])/len(dset))**2
-     
+
     # Method that builds the decision tree.
     def build(self, data,isRandomForrest,level = 0):
         left_dataset =  right_dataset = best_feature = feature_values = None
@@ -45,7 +45,8 @@ class DecisionTree:
             node.result = len( data[data[self.target] == True] ) >= len( data[data[self.target] == False] )
             return node
 
-        if isRandomForrest==True:
+        if self.isRandomForrest==1:
+            print("random Forest")
             p = list(range(data.columns.shape[0]))
             columns = data.columns
             setp = random.sample(p, int(np.sqrt(len(p))))
@@ -88,7 +89,7 @@ class DecisionTree:
             node.right = self.build(right_dataset,level+1)
         if node.left==None and node.right==None:    # If both the trees are not built, it has to be leaf.
             node.leaf = True
-        return node        
+        return node
 
     def fit(self):
         self.root = self.build(self.data,self.isRandomForrest)
@@ -105,7 +106,7 @@ class DecisionTree:
 
     def predict(self,s):
         return self.__predict__(s,self.root)
-   
+
 def t(x):
     if x is None:
         return ""
@@ -126,19 +127,21 @@ def test(dtree, test_df = None):
     return preds, (score*100/len(test_df))
 
 ## (ii) bagging()
+
 def bagging(trainingSet = None, testSet = None, bagging_num = 30, depth = 8):
     trainBagPreds,testBagPreds,trainAcc = [],[],0
     for iteration in range(bagging_num):
         trainSet = trainingSet.sample(frac = 1, replace = True).reset_index(drop = True)
         ytest = testSet["decision"]
-        dtree = DecisionTree(trainSet, target = 'decision', isRandomForrest=True, leaf_lim = 50, depth = depth)  # Instantiate the decision tree.
+        dtree = DecisionTree(trainSet, target = 'decision', isRandomForrest=0, leaf_lim = 50, depth = depth)  # Instantiate the decision tree.
         root = dtree.fit() # Train the decision tree.
         trainPreds, train_acc = test(dtree, trainingSet) # Test this decision tree on the training set.
         trainAcc += train_acc
         preds, test_acc = test(dtree, testSet)  # Test this decision tree on the testing set.
         trainBagPreds.append(trainPreds)
         testBagPreds.append(preds)
-    trainBagPreds,testBagPreds,finalTrainPreds,trainPredDf = np.array(trainBagPreds),np.array(testBagPreds),[],pd.DataFrame(trainBagPreds)
+    trainBagPreds,testBagPreds,finalTrainPreds= np.array(trainBagPreds),np.array(testBagPreds),[]
+    trainPredDf = pd.DataFrame(trainBagPreds)
     for i in range(trainBagPreds.shape[1]):
         finalTrainPreds.append( trainPredDf[i].value_counts().idxmax() )
     finalTestPreds,testPredDf = [],pd.DataFrame(testBagPreds)
@@ -147,18 +150,18 @@ def bagging(trainingSet = None, testSet = None, bagging_num = 30, depth = 8):
     return np.array(finalTrainPreds), np.array(finalTestPreds), (trainAcc / bagging_num)
 
 def randomForests(trainingSet = None, testSet = None, bagging_num = 30, depth = 8):
-    
+
     trainBagPreds = []
     testBagPreds = []
     trainAcc = 0
 
     for iteration in range(bagging_num):
-        
+
         trainSet = trainingSet.sample(frac = 1, replace = True).reset_index(drop = True)
         ytest = testSet["decision"]
 
         # Instantiate the decision tree.
-        dtree = DecisionTree(trainSet, target = 'decision', isRandomForrest=True, leaf_lim = 50, depth = depth)
+        dtree = DecisionTree(trainSet, target = 'decision', isRandomForrest=1, leaf_lim = 50, depth = depth)
 
         # Train the decision tree.
         root = dtree.fit()
@@ -173,10 +176,10 @@ def randomForests(trainingSet = None, testSet = None, bagging_num = 30, depth = 
 
         trainBagPreds.append(trainPreds)
         testBagPreds.append(preds)
-    
+
     trainBagPreds = np.array(trainBagPreds)
     testBagPreds = np.array(testBagPreds)
-    
+
     finalTrainPreds = []
     trainPredDf = pd.DataFrame(trainBagPreds)
     for i in range(trainBagPreds.shape[1]):
@@ -190,33 +193,33 @@ def randomForests(trainingSet = None, testSet = None, bagging_num = 30, depth = 
     return np.array(finalTrainPreds), np.array(finalTestPreds), (1.0*trainAcc/bagging_num)
 
 if __name__ == "__main__":
-    
+
     trainFileName = sys.argv[1]
     testFileName = sys.argv[2]
     modelIdx = int(sys.argv[3])
-    
+
     trainingSet = pd.read_csv(trainFileName)
     testSet = pd.read_csv(testFileName)
     bagPreds=[]
     if (modelIdx == 1):
-        
-        tree = DecisionTree(trainingSet, target = 'decision', isRandomForrest=False, leaf_lim = 50, depth = 8)
+
+        tree = DecisionTree(trainingSet, target = 'decision', isRandomForrest=0, leaf_lim = 50, depth = 8)
         root = tree.fit()
         # Test this decision tree.
         preds, test_acc = test(tree, testSet)
-        bagPreds.append(preds)               
+        bagPreds.append(preds)
         preds, acc = test(tree, trainingSet)
         print('Training Accuracy DT: %.2f' % acc)
         print('Testing Accuracy DT: %.2f' % test_acc)
-        
+
     elif (modelIdx == 2):
-        
+
         trainBagPreds, testBagPreds, trainAcc = bagging(trainingSet, testSet, bagging_num = 30)
         print ("Training Accuracy BT: %.2f" % trainAcc)
         print ("Testing Accuracy BT: %.2f" %  (np.mean(testBagPreds == testSet["decision"].values)*100) )
-        
+
     else:
-        
+
         # modelIdx == 3.
         trainBagPreds, testBagPreds, trainAcc = randomForests(trainingSet, testSet, bagging_num = 30)
         print ("Training Accuracy RF: %.2f" % trainAcc)
