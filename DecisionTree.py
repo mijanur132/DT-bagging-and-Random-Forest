@@ -26,7 +26,7 @@ class DecisionTree:
             node.result = len( data[data[self.target]==True] ) >= len( data[data[self.target]==False] )
             return node
         node.level, node.gini = level,gini
-
+        #print("level,depth",level,self.depth)
         if self.depth is not None and level == self.depth:  # When we reach the maximum permissible depth. (Have reached a leaf node).
             node.leaf = True
             # The resulting class of this leaf, is going to be the majority between of the classes between 0 and 1.
@@ -77,9 +77,9 @@ class DecisionTree:
             return node
         node.min_gini,node.feature_values,node.split= min_gini,feature_values,best_feature
         if left_dataset is not None:   # Build tree for left or right dataset.
-            node.left = self.build(left_dataset,level+1)
+            node.left = self.build(left_dataset,isRandomForrest,level+1)
         if right_dataset is not None:
-            node.right = self.build(right_dataset,level+1)
+            node.right = self.build(right_dataset,isRandomForrest,level+1)
         if node.left==None and node.right==None:    # If both the trees are not built, it has to be leaf.
             node.leaf = True
         return node

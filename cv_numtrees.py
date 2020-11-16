@@ -3,11 +3,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 from trees import *
-
+from plots import *
 from scipy import stats
 from statistics import *
 
 num_folds=10
+bagging_num=30
 def prepareData(trainSet):
     trainSet = trainSet.sample(random_state=18, frac=1).reset_index(drop=True)
     trainingSet = trainSet.sample(random_state=32, frac=0.5).reset_index(drop=True)
@@ -34,6 +35,7 @@ def stderr_avg(bg, num_trees, num_folds):
 def run_model(trees, fold, trainingSet):
     columns = trainingSet.columns
     models = ["Bagging", "Random Forests"]
+    #models = ["Random Forests"]
     num_trees = [10, 20, 40, 50]
     depth = 8
     bg, rf = {}, {}
@@ -55,19 +57,29 @@ def run_model(trees, fold, trainingSet):
                 trainData = trainData.reshape((-1, trainingSet.shape[1]))
                 tdata, tstdata = pd.DataFrame(trainData, columns=columns), pd.DataFrame(testData, columns=columns)
                 if (model == "Bagging"):
-                    trainBagPreds, testBagPreds, trainAcc = bagging(tdata, tstdata, bagging_num=30, depth=depth)
+                    trainBagPreds, testBagPreds, trainAcc = bagging(tdata, tstdata, bagging_num, depth=depth)
                     test_acc = np.mean(testBagPreds == tstdata["decision"].values) * 100
                     bg[num_tree].append(test_acc)
 
                 elif (model == "Random Forests"):  # Random Forests.
-                    trainBagPreds, testBagPreds, trainAcc = randomForests(tdata, tstdata, bagging_num=30, depth=depth)
-                    if (testBagPreds.shape[0] != tstdata[:, -1].reshape((-1, 1)).shape[0]):
+                    trainBagPreds, testBagPreds, trainAcc = randomForests(tdata, tstdata, bagging_num, depth=depth)
+                    # print("testBagPreds.shape[0]",testBagPreds.shape[0])
+                    # print("tstdata[:, -1]",testData[:, -1])
+                    # print(testData.shape)
+                    # test1Data=testData[:, -1].reshape((-1, 1)).shape[0]
+                    # print("tstdata[:, -1].reshape",test1Data )
+                    #print(test1Data.shape)
+                    a=testBagPreds.shape[0]
+                    b=testData[:, -1].reshape((-1, 1)).shape[0]
+                    # print(a,b)
+                    if (a !=b ):
                         print("TestBag : ", testBagPreds.shape)
                         print(tstdata[:, -1].reshape((-1, 1)).shape)
                         print("Size mismatch RF!!")
                         break
                     test_acc = np.mean(testBagPreds == tstdata["decision"].values) * 100
-                    rf[depth].append(test_acc)
+                    print(test_acc)
+                    rf[num_tree].append(test_acc)
                 else:
                     "Give a model..will yea??"
                 print(model, depth, i, test_acc)
@@ -76,19 +88,19 @@ def run_model(trees, fold, trainingSet):
     bg_stderr, bg_avgacc = stderr_avg(bg, num_trees, num_folds)
     rf_stderr, rf_avgacc = stderr_avg(rf, num_trees, num_folds)
 
-
-    plt.figure(figsize=(10, 5))
-    plt.title("Depth of the Tree vs Testing Accuracy")
-
-
-    plt.errorbar(num_trees, bg_avgacc, marker='o', yerr=bg_stderr)
-    plt.errorbar(num_trees, rf_avgacc, marker='o', yerr=rf_stderr)
-
-    plt.xlabel("Number of tree(s).")
-    plt.ylabel("Test Accuracy.")
-    plt.legend(["bt_test", "rf_test"])
-    plt.savefig("num_tree.png")
-    plt.show()
+    cv_num_tree_plot(num_trees, bg_avgacc, bg_stderr, rf_avgacc, rf_stderr)
+    # plt.figure(figsize=(10, 5))
+    # plt.title("Depth of the Tree vs Testing Accuracy")
+    #
+    #
+    # plt.errorbar(num_trees, bg_avgacc, marker='o', yerr=bg_stderr)
+    # plt.errorbar(num_trees, rf_avgacc, marker='o', yerr=rf_stderr)
+    #
+    # plt.xlabel("Number of tree(s).")
+    # plt.ylabel("Test Accuracy.")
+    # plt.legend(["bt_test", "rf_test"])
+    # plt.savefig("num_tree.png")
+    # plt.show()
 
 def main():
     print("nothing")

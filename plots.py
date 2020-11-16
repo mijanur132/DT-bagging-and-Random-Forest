@@ -31,7 +31,7 @@ def cv_frac_plot(tfracs, dt_avgacc, dt_stderr, bg_avgacc, bg_stderr, rf_avgacc, 
     plt.savefig("cv_frac.png")
     plt.show()
 
-def cv_num_tree_plot(num_trees, dt_avgacc, dt_stderr, bg_avgacc, bg_stderr, rf_avgacc, rf_stderr):
+def cv_num_tree_plot(num_trees, bg_avgacc, bg_stderr, rf_avgacc, rf_stderr):
     plt.figure(figsize=(10, 5))
     plt.title("Number of Trees vs Testing Accuracy")
 
