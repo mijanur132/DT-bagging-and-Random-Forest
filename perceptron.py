@@ -166,35 +166,35 @@ def batch_grad_dec(train_set,w,max_iter,c):
 
 
 #best upto now:
-def batch_grad_dec_f1(train_set,w,max_iter,c):
+def batch_grad_dec_f1(train_set,w,LR):
     data_dim=len(w[0])
     classes_N=2 #number of classes
-    del_w = np.zeros((classes_N, data_dim))
+    #del_w = np.zeros((classes_N, data_dim))
     #print(w[0].size, del_w[0].size)
-    for i in range(max_iter):
-        del_w=del_w+0.1*np.linalg.norm(w, ord=1)
-        del_w1 = np.zeros((classes_N, data_dim))
-        for item in train_set:
-            #print("item",item)
-            del_w = np.zeros((classes_N, data_dim))
-            oib=np.zeros(classes_N)
-            y1=np.zeros(classes_N)
-            y=int(item[len(train_set[0])-1] ) #label add label here
-            #print("y",y)
-            b=item[len(train_set[0])-2]   #bias
-            #print("b",b)
-            #print(item.size)
-            item=item[:-1]             #remove last 2 entry as they are not attribute
-            #print("updated item",item)
-            #print("updated item size:",item.size, item[0].size)
-            oib=dot(w,item)
-            oib=1/(1+np.exp(-oib))
-            y1[y]=1
-            y2=c*(oib-y1)
-            for ib in range(len(del_w)):
-                del_w[ib] -= y2[ib]*item
-            w+=del_w
-            del_w1+= del_w
+
+    #del_w=del_w+0.1*np.linalg.norm(w, ord=1)
+    #del_w1 = np.zeros((classes_N, data_dim))
+    for item in train_set:
+        #print("item",item)
+        del_w = np.zeros((classes_N, data_dim))
+        oib=np.zeros(classes_N)
+        y1=np.zeros(classes_N)
+        y=int(item[len(train_set[0])-1] ) #label add label here
+        #print("y",y)
+        b=item[len(train_set[0])-2]   #bias
+        #print("b",b)
+        #print(item.size)
+        item=item[:-1]             #remove last 2 entry as they are not attribute
+        #print("updated item",item)
+        #print("updated item size:",item.size, item[0].size)
+        oib=dot(w,item)
+        oib=1/(1+np.exp(-oib))
+        y1[y]=1
+        y2=LR*(oib-y1)
+        for ib in range(len(del_w)):
+            del_w[ib] -= y2[ib]*item
+        w+=del_w
+       # del_w1+= del_w
     err_or = np.zeros(classes_N)
     for item in train_set:
         y=int(item[-1])
@@ -210,13 +210,11 @@ def batch_grad_dec_f1(train_set,w,max_iter,c):
         y11[y] = 1
         for ib in range(len(del_w)):
             err_or[ib] -= (y11[ib]* M[ib]+(1-y11[ib])*N[ib])
-    #err_or=np.linalg.norm(err_or, ord=1)
     err_or=sum(err_or)/classes_N
-    #print(err_or)
     return ((w,err_or))
 
 
-def perceptron_func(train_set,test_set,trY,tsY,w):
+def perceptron_func(train_set,test_set,trY,tsY,w,learningR):
     train_set,test_set=np.array(train_set),np.array(test_set)
     #print(train_set)
     data_dim = len(train_set[0])+2
@@ -236,78 +234,69 @@ def perceptron_func(train_set,test_set,trY,tsY,w):
     tst_setwithBiasLabel[:,data_dim-1]=np.array(tsY)[:]
     tst_setwithBiasLabel[:, data_dim-2] = 1
     tst_setwithBiasLabel[:, 0:data_dim - 2] = test_set[:, :]
-    #print("ts1", train_set[:, 0])
-    #print("tsbl1",train_setwithBiasLabel[:,0])
-    classes_N=2
-    #w = np.random.random((classes_N, data_dim-1))
-    aaa = 0.001
-    bbb = 10
-    ccc = 1
 
-    #geometric = [aaa * bbb ** (n - 1) for n in range(1, ccc + 1)]
-    geometric=[0.0001]
-    for ixx in geometric:
-        max_iterx = range(1, 10, 10)
-        for max_iterf in max_iterx:
-            global confusion_matrix
-            confusion_matrix = np.zeros((10, 10))
-            max_iter = max_iterf
-            c = ixx
-            #print("c",c)
-            wx = batch_grad_dec_f1(train_setwithBiasLabel, w, max_iter, c)
-            w = wx[0]
-            errr = wx[1] * 100 / 10000
-            #print(errr)
-            read_perceptron(w, train_setwithBiasLabel)
-            result = calculate_f1_score(confusion_matrix)
-            confusion_matrix = np.zeros((10, 10))
-            read_perceptron(w, tst_setwithBiasLabel)
-            resultl = calculate_f1_score(confusion_matrix)
-            #print("epoch %d: Training loss: %.2f, Training Accuracy: %.2f, Test Accuracy: %.2f" % (
-            #max_iterf, errr / 100, result[0] / 100, resultl[0] / 100))
-            fold_acc=resultl[0] / 100
+    classes_N=2
+
+
+    global confusion_matrix
+    confusion_matrix = np.zeros((10, 10))
+
+    wx = batch_grad_dec_f1(train_setwithBiasLabel, w,learningR)
+    w = wx[0]
+    errr = wx[1] * 100 / 10000
+    #print(errr)
+    read_perceptron(w, train_setwithBiasLabel)
+    result = calculate_f1_score(confusion_matrix)
+    confusion_matrix = np.zeros((10, 10))
+    read_perceptron(w, tst_setwithBiasLabel)
+    resultl = calculate_f1_score(confusion_matrix)
+
+    fold_acc=resultl[0] / 100
     return w, fold_acc
 
 def run_model(trees,fold,trainingSet):
     columns = trainingSet.columns
     models =  ["perceptron"]
-    iteranationN = 50
+    iteranationN = 10
     dt,bg,rf = {},{},{}
     fold_accN=[]
     classes_N = 2
     data_dim = len(fold[0][0]) + 1
     w = np.random.random((classes_N, data_dim - 1))
-
-    for  iterI in range(iteranationN):
-        fold_acc = []
-        for i in range(num_folds):
-            print("fold:",i)
-            testData = fold[i]
-            folds=list(range(num_folds))
-            del folds[i]
-            trainData=np.array(fold[folds[0]])
-            del folds[0]
-            for j in folds:
-                trainData = np.vstack((trainData, np.array(fold[j])))
-            trainData=np.array((trainData))
-            trainData=trainData.reshape((-1,trainingSet.shape[1]))
-            tdata, tstdata = pd.DataFrame(trainData, columns=columns), pd.DataFrame(testData, columns=columns)
-            tdata_ylabel=tdata["decision"]
-            tstdata_ylabel = tstdata["decision"]
-            #print(tdata_ylabel,tstdata_ylabel)
-            tdata=tdata.drop("decision",axis=1)
-            tstdata=tstdata.drop("decision",axis=1)
-            #print(tdata.shape)
-
-            w,fold_acc1=perceptron_func(tdata,tstdata,tdata_ylabel,tstdata_ylabel,w)
-            fold_acc.append(fold_acc1)
-
-            #print(model, depth, i, test_acc)
-        fold_accN.append(fold_acc)
-        print("fold acc", fold_acc, np.mean(fold_acc))
+    c_s=[0.1,0.01,0.001,0.0001,0.00001]
+    csList=list(range(1,len(c_s)))
+    print(csList)
+    for c in c_s:
+        print("c",c)
+        for iterI in range(iteranationN):
+            fold_acc = []
+            for i in range(num_folds):
+                #print("fold:",i)
+                testData = fold[i]
+                folds=list(range(num_folds))
+                del folds[i]
+                trainData=np.array(fold[folds[0]])
+                del folds[0]
+                for j in folds:
+                    trainData = np.vstack((trainData, np.array(fold[j])))
+                trainData=np.array((trainData))
+                trainData=trainData.reshape((-1,trainingSet.shape[1]))
+                tdata, tstdata = pd.DataFrame(trainData, columns=columns), pd.DataFrame(testData, columns=columns)
+                tdata_ylabel=tdata["decision"]
+                tstdata_ylabel = tstdata["decision"]
+                #print(tdata_ylabel,tstdata_ylabel)
+                tdata=tdata.drop("decision",axis=1)
+                tstdata=tstdata.drop("decision",axis=1)
+                w,fold_acc1=perceptron_func(tdata,tstdata,tdata_ylabel,tstdata_ylabel,w,c)
+                if iterI==iteranationN-1:
+                    fold_acc.append(fold_acc1)
+        fold_accN.append(np.mean(fold_acc))
+        print(fold_acc,np.mean(fold_acc))
+    print("fold acc", fold_acc, np.mean(fold_acc))
     print("fold accN", fold_accN, np.mean(fold_accN))
-    dt_stderr, dt_avgacc = stderr_avg(fold_accN, range(iteranationN), num_folds)
-    cv_perceptron_plot(range(iteranationN), dt_avgacc, dt_stderr)
+    #dt_stderr, dt_avgacc = stderr_avg(fold_accN, range(5), num_folds)
+    css=["0.1","0.01","0.001","0.0001","0.00001"]
+    cv_perceptron_plotLR(css, fold_accN)
 
 
 

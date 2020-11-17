@@ -44,3 +44,15 @@ def cv_num_tree_plot(num_trees, bg_avgacc, bg_stderr, rf_avgacc, rf_stderr):
     plt.legend(["Bagging", "RF"])
     plt.savefig("num_tree.png")
     plt.show()
+
+def cv_perceptron_plotLR(depths,dt_avgacc):
+    plt.figure(figsize=(10, 5))
+    plt.title("Testing Accuracy vs Learning Rate")
+
+    plt.errorbar(depths, dt_avgacc, marker='x',color="red")
+
+    plt.xlabel("Learning Rate")
+    plt.ylabel("Test Accuracy.")
+    plt.legend(["Single Layer Perceptron"])
+    plt.savefig("cv_perceptron_lr.png")
+    plt.show()

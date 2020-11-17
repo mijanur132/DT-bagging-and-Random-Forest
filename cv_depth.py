@@ -91,6 +91,19 @@ def run_model(trees,fold,trainingSet):
     rf_stderr, rf_avgacc = stderr_avg(rf, depths, num_folds)
     cv_depth_plot(depths, dt_avgacc, dt_stderr, bg_avgacc, bg_stderr, rf_avgacc, rf_stderr)
 
+    test_vals = stats.ttest_rel(dt_avgacc, bg_avgacc)
+
+    '''
+        Null Hypothesis : Differences between the models is not significant.
+
+        p-value : 4.45 e-08
+
+        p-value < significance value (0.05)
+
+        Reject the null hypothesis, meaning the differences between the models is actually significant.
+    '''
+
+    print(test_vals)
 # Plot the Figure.
 #     plt.figure(figsize = (10,5))
 #     plt.title("Depth of the Tree vs Testing Accuracy")
@@ -116,7 +129,7 @@ def run_model(trees,fold,trainingSet):
 
     # Calculate the p-value associated with the models.
     test_vals = stats.ttest_rel(dt_avgacc, bg_avgacc)
-    print(stats.ttest_rel(dt_avgacc, bg_avgacc))
+    print(test_vals)
 '''
     Null Hypothesis : Differences between the models is not significant.
     

@@ -89,18 +89,8 @@ def run_model(trees, fold, trainingSet):
     rf_stderr, rf_avgacc = stderr_avg(rf, num_trees, num_folds)
 
     cv_num_tree_plot(num_trees, bg_avgacc, bg_stderr, rf_avgacc, rf_stderr)
-    # plt.figure(figsize=(10, 5))
-    # plt.title("Depth of the Tree vs Testing Accuracy")
-    #
-    #
-    # plt.errorbar(num_trees, bg_avgacc, marker='o', yerr=bg_stderr)
-    # plt.errorbar(num_trees, rf_avgacc, marker='o', yerr=rf_stderr)
-    #
-    # plt.xlabel("Number of tree(s).")
-    # plt.ylabel("Test Accuracy.")
-    # plt.legend(["bt_test", "rf_test"])
-    # plt.savefig("num_tree.png")
-    # plt.show()
+    test_vals = stats.ttest_rel(bg_avgacc, rf_avgacc)
+    print(test_vals)
 
 def main():
     print("nothing")
